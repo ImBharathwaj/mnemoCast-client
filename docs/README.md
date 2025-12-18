@@ -7,8 +7,8 @@ Digital Display Screen System with identity, credentials, heartbeat, and ad serv
 - ✅ **Screen Identity** - Unique UUID-based screen identification
 - ✅ **Configuration Management** - Secure configuration file handling
 - ✅ **Credentials Management** - Secure API key storage with AES-256-GCM encryption
-- ✅ **Ad Server Integration** - Registration and heartbeat communication
-- ✅ **Heartbeat System** - Regular status updates with background scheduler
+- ⏭️ **Ad Server Integration** - Registration and communication (Phase 3)
+- ⏭️ **Heartbeat System** - Regular status updates (Phase 4)
 
 ## 🚀 Quick Start
 
@@ -29,14 +29,7 @@ This will:
 2. Generate or load screen identity
 3. Load or create default configuration
 4. Check for credentials (prompts to set API key if missing)
-5. Register with ad server (if credentials exist)
-6. Test heartbeat connection
-7. Start heartbeat scheduler (runs in background)
-8. Display screen information and status
-9. Show periodic status updates (every 30 seconds)
-10. Wait for Ctrl+C to stop gracefully
-
-**📖 For detailed instructions, see:** `RUN_SYSTEM.md`
+5. Display screen information and status
 
 ## 📁 Project Structure
 
@@ -52,17 +45,14 @@ mnemoCast-client/
 │   ├── credentials/             # Credentials management
 │   │   ├── manager.go          # Credential operations
 │   │   └── storage.go          # Secure storage
-│   ├── client/                  # Ad server client
-│   │   └── client.go           # HTTP client with auth
-│   ├── heartbeat/               # Heartbeat scheduler
-│   │   └── scheduler.go        # Background heartbeat system
+│   ├── heartbeat/               # Heartbeat (Phase 4)
+│   ├── client/                  # Ad server client (Phase 3)
 │   ├── config/                  # Configuration
-│   │   └── loader.go           # Config loading/saving
+│   │   └── loader.go            # Config loading/saving
 │   └── models/                  # Data models
 │       ├── identity.go
 │       ├── credentials.go
-│       ├── config.go
-│       └── screen.go
+│       └── config.go
 └── pkg/
     └── storage/                  # Storage utilities
         ├── encryption.go        # AES-256-GCM encryption
@@ -84,10 +74,8 @@ Configuration is stored in `~/.mnemocast/`:
 
 - ✅ **Phase 1 Complete:** Identity & Configuration
 - ✅ **Phase 2 Complete:** Credentials Management
-- ✅ **Phase 3 Complete:** Ad Server Client
-- ✅ **Phase 4 Complete:** Heartbeat System
-
-**🎉 All Phases Complete - System Ready for Production!**
+- ⏭️ **Phase 3 Next:** Ad Server Client
+- ⏭️ **Phase 4:** Heartbeat System
 
 ### Running Tests
 
@@ -97,7 +85,7 @@ go test ./...
 
 ## 📚 Documentation
 
-- **Implementation Plan:** `docs/SCREEN_SYSTEM_PLAN.md`
+- **Implementation Plan:** `SCREEN_SYSTEM_PLAN.md`
 - **Architecture:** See plan document
 
 ## 🔐 Security
@@ -111,17 +99,8 @@ go test ./...
 ## 🛠️ Requirements
 
 - Go 1.22+
-- Backend running at `http://10.42.0.1:8080`
-
-## 🌐 API Integration
-
-The system automatically:
-- Registers screen on startup (if credentials configured)
-- Tests heartbeat connection
-- Uses API key authentication via `X-API-Key` header
-- Implements retry logic with exponential backoff
+- Backend running at `http://10.42.0.1:8080` (for Phase 3+)
 
 ---
 
-**Status:** ✅ All Phases Complete - Production Ready! 🎉
-
+**Status:** Phase 1 & 2 Complete | Phase 3 Next

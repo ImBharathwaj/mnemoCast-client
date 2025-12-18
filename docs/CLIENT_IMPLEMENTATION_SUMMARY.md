@@ -247,8 +247,11 @@ npm run build
 
 ## 🔗 Related Documentation
 
-- **Full Plan:** `docs/DIGITAL_DISPLAY_CLIENT_PLAN.md`
-- **Quick Start:** `docs/DIGITAL_DISPLAY_CLIENT_QUICKSTART.md`
+- **Full Plan:** `DIGITAL_DISPLAY_CLIENT_PLAN.md`
+- **Quick Start:** `DIGITAL_DISPLAY_CLIENT_QUICKSTART.md`
+- **Rust Implementation:** `RUST_TAURI_IMPLEMENTATION_PLAN.md` 🦀
+- **Golang Implementation:** `GOLANG_WAILS_IMPLEMENTATION_PLAN.md` 🐹
+- **Implementation Comparison:** `IMPLEMENTATION_COMPARISON.md`
 - **API Reference:** `docs/API_DOCUMENTATION.md`
 - **Backend Setup:** `QUICKSTART.md`
 
@@ -256,11 +259,20 @@ npm run build
 
 ## ❓ Next Steps
 
-1. **Review the comprehensive plan** (`DIGITAL_DISPLAY_CLIENT_PLAN.md`)
-2. **Follow the quick start guide** (`DIGITAL_DISPLAY_CLIENT_QUICKSTART.md`)
-3. **Set up the project** using the provided templates
-4. **Test integration** with the running backend
-5. **Iterate and enhance** based on requirements
+1. **Review implementation options:**
+   - Compare Rust vs Golang: `IMPLEMENTATION_COMPARISON.md`
+   - Choose based on your priorities (speed vs efficiency)
+
+2. **Follow your chosen implementation:**
+   - **Rust (Tauri):** `RUST_TAURI_IMPLEMENTATION_PLAN.md` - Ultra-lightweight, best performance
+   - **Golang (Wails):** `GOLANG_WAILS_IMPLEMENTATION_PLAN.md` - Faster development, simpler code
+
+3. **Alternative (Web-based):**
+   - **TypeScript/React:** `DIGITAL_DISPLAY_CLIENT_QUICKSTART.md` - Fastest to develop
+
+4. **Set up the project** using the provided templates
+5. **Test integration** with the running Scala/Pekko backend
+6. **Iterate and enhance** based on requirements
 
 ---
 

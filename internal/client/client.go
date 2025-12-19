@@ -213,9 +213,19 @@ func (c *Client) GetAds(screenID string) (*models.AdDeliveryResponse, error) {
 		return nil, fmt.Errorf("failed to fetch ads with status %d: %s", resp.StatusCode, string(body))
 	}
 
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[%s] [ERROR] Failed to read ads response body: %v", responseTime.Format("15:04:05.000"), err)
+		return nil, fmt.Errorf("failed to read ads response: %w", err)
+	}
+
+	// Log the raw JSON response from server
+	log.Printf("[%s] [RESPONSE] Ads JSON Response from Server:\n%s", responseTime.Format("15:04:05.000"), string(body))
+
 	// Parse response
 	var adResponse models.AdDeliveryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&adResponse); err != nil {
+	if err := json.Unmarshal(body, &adResponse); err != nil {
 		log.Printf("[%s] [ERROR] Failed to parse ads response: %v", responseTime.Format("15:04:05.000"), err)
 		return nil, fmt.Errorf("failed to parse ads response: %w", err)
 	}

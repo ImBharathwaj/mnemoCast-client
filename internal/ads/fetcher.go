@@ -2,6 +2,7 @@ package ads
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"mnemoCast-client/internal/client"
 	"mnemoCast-client/internal/models"
@@ -139,15 +140,33 @@ func (f *Fetcher) fetchAds() {
 					successTime.Format("15:04:05.000"), totalDuration, len(ads.Ads))
 			}
 
-			// Log ad details
+			// Log ad details and JSON response
 			if len(ads.Ads) > 0 {
 				log.Printf("[%s] [INFO] Received %d ads for display", successTime.Format("15:04:05.000"), len(ads.Ads))
+				
+				// Log full JSON response
+				jsonData, err := json.MarshalIndent(ads, "", "  ")
+				if err != nil {
+					log.Printf("[%s] [WARN] Failed to marshal ads to JSON: %v", successTime.Format("15:04:05.000"), err)
+				} else {
+					log.Printf("[%s] [RESPONSE] Ads JSON Response:\n%s", successTime.Format("15:04:05.000"), string(jsonData))
+				}
+				
+				// Log individual ad summary
 				for i, ad := range ads.Ads {
 					log.Printf("[%s] [INFO] Ad %d: ID=%s, Type=%s, URL=%s", 
 						successTime.Format("15:04:05.000"), i+1, ad.ID, ad.Type, ad.ContentURL)
 				}
 			} else {
 				log.Printf("[%s] [INFO] No ads available for display", successTime.Format("15:04:05.000"))
+				
+				// Log JSON response even when no ads
+				jsonData, err := json.MarshalIndent(ads, "", "  ")
+				if err != nil {
+					log.Printf("[%s] [WARN] Failed to marshal ads to JSON: %v", successTime.Format("15:04:05.000"), err)
+				} else {
+					log.Printf("[%s] [RESPONSE] Ads JSON Response:\n%s", successTime.Format("15:04:05.000"), string(jsonData))
+				}
 			}
 
 			return

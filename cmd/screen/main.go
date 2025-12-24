@@ -11,6 +11,7 @@ import (
 	"mnemoCast-client/internal/heartbeat"
 	"mnemoCast-client/internal/identity"
 	"mnemoCast-client/internal/models"
+	"mnemoCast-client/internal/player"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -157,9 +158,10 @@ func main() {
 	}
 	fmt.Println()
 
-	// Initialize ad server client, heartbeat, and ad fetcher if credentials exist
+	// Initialize ad server client, heartbeat, ad fetcher, and player if credentials exist
 	var heartbeatScheduler *heartbeat.Scheduler
 	var adFetcher *ads.Fetcher
+	var adPlayer *player.Player
 	var adClient *client.Client
 	
 	if screenID != "" && passkey != "" {
@@ -251,6 +253,81 @@ func main() {
 			adFetcher.Start()
 			fmt.Printf("   [OK] Ad fetcher started (interval: %d seconds)\n", screenConfig.AdFetchInterval)
 			fmt.Printf("   [INFO] Ads will be stored in: %s/ads/\n", configDir)
+			
+			// Initialize and start ad player
+			fmt.Println()
+			fmt.Println("Starting ad player...")
+			adStorage := adFetcher.GetStorage()
+			adPlayer = player.NewPlayer(adStorage, screenConfig)
+			
+			// Set callback to update player when new ads arrive
+			adFetcher.SetOnAdsUpdated(func(adResponse *models.AdDeliveryResponse) {
+				if adPlayer != nil {
+					adPlayer.UpdateAds(adResponse)
+				}
+			})
+			
+			// Load initial ads into player
+			if storedAds, err := adFetcher.LoadAdsFromStorage(); err == nil && len(storedAds.Ads) > 0 {
+				adPlayer.UpdateAds(storedAds)
+			}
+			
+			// Start player
+			if err := adPlayer.Start(); err != nil {
+				log.Printf("[WARN] Failed to start ad player: %v", err)
+				fmt.Println("   [WARN] Ad player failed to start")
+			} else {
+				fmt.Printf("   [OK] Ad player started\n")
+				if stats := adPlayer.GetStats(); stats.TotalAdsPlayed > 0 {
+					fmt.Printf("   [INFO] Player ready with %d ads in playlist\n", adPlayer.GetPlaylist().GetCount())
+				}
+			}
+		}
+	}
+
+	// Initialize and start ad player if ads exist in storage (even without credentials)
+	// This allows manual testing with locally created ads
+	if adPlayer == nil {
+		adStorage := ads.NewStorage(configDir)
+		if storedAds, err := adStorage.LoadAds(); err == nil && len(storedAds.Ads) > 0 {
+			fmt.Println()
+			fmt.Println("Starting ad player (manual ads detected)...")
+			adPlayer = player.NewPlayer(adStorage, screenConfig)
+			
+			// Load ads into player
+			adPlayer.UpdateAds(storedAds)
+			
+			// Start player
+			if err := adPlayer.Start(); err != nil {
+				log.Printf("[WARN] Failed to start ad player: %v", err)
+				fmt.Println("   [WARN] Ad player failed to start")
+			} else {
+				fmt.Printf("   [OK] Ad player started\n")
+				fmt.Printf("   [INFO] Player ready with %d ads in playlist\n", adPlayer.GetPlaylist().GetCount())
+			}
+		}
+	}
+
+	// Initialize and start ad player if ads exist in storage (even without credentials)
+	// This allows manual testing with locally created ads
+	if adPlayer == nil {
+		adStorage := ads.NewStorage(configDir)
+		if storedAds, err := adStorage.LoadAds(); err == nil && len(storedAds.Ads) > 0 {
+			fmt.Println()
+			fmt.Println("Starting ad player (manual ads detected)...")
+			adPlayer = player.NewPlayer(adStorage, screenConfig)
+			
+			// Load ads into player
+			adPlayer.UpdateAds(storedAds)
+			
+			// Start player
+			if err := adPlayer.Start(); err != nil {
+				log.Printf("[WARN] Failed to start ad player: %v", err)
+				fmt.Println("   [WARN] Ad player failed to start")
+			} else {
+				fmt.Printf("   [OK] Ad player started\n")
+				fmt.Printf("   [INFO] Player ready with %d ads in playlist\n", adPlayer.GetPlaylist().GetCount())
+			}
 		}
 	}
 
@@ -278,6 +355,9 @@ func main() {
 			case <-sigChan:
 				fmt.Println()
 				fmt.Println("Shutting down...")
+				if adPlayer != nil {
+					adPlayer.Stop()
+				}
 				heartbeatScheduler.Stop()
 				if adFetcher != nil {
 					adFetcher.Stop()
@@ -303,29 +383,72 @@ func main() {
 		}
 	} else {
 		// System is running but waiting for credentials
-		fmt.Println("[WARN] System is running but heartbeat is not active")
-		fmt.Println("   Credentials are required to connect to ad server")
-		fmt.Println()
-		fmt.Println("INFO: To enable heartbeat system:")
-		fmt.Println("   1. Register a screen on the server")
-		fmt.Println("   2. Get the Screen ID and Passkey from the server")
-		fmt.Println("   3. Stop this process (Ctrl+C)")
-		fmt.Println("   4. Run again: ./bin/screen")
-		fmt.Println("   5. Enter 'y' when prompted and configure credentials")
-		fmt.Println()
-		fmt.Println("Waiting for credentials...")
-		fmt.Println("   Press Ctrl+C to exit")
-		fmt.Println()
-		
-		// Wait for interrupt
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
-		
-		fmt.Println()
-		fmt.Println("Shutting down...")
-		fmt.Println("[OK] Shutdown complete")
-		return
+		// Check if player is running (manual ads)
+		if adPlayer != nil {
+			fmt.Println("Ad player is running with manual ads...")
+			fmt.Println("   Press Ctrl+C to stop")
+			fmt.Println()
+			
+			// Set up signal handling for graceful shutdown
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+			
+			// Status update ticker
+			statusTicker := time.NewTicker(30 * time.Second)
+			defer statusTicker.Stop()
+			
+			// Main loop
+			for {
+				select {
+				case <-sigChan:
+					fmt.Println()
+					fmt.Println("Shutting down...")
+					if adPlayer != nil {
+						adPlayer.Stop()
+					}
+					fmt.Println("[OK] Shutdown complete")
+					return
+				case <-statusTicker.C:
+					stats := adPlayer.GetStats()
+					currentAd := adPlayer.GetCurrentAd()
+					if currentAd != nil {
+						fmt.Printf("[PLAYER] Currently playing: %s (type: %s) | Total played: %d\n", 
+							currentAd.ID, currentAd.Type, stats.TotalAdsPlayed)
+					} else {
+						fmt.Printf("[PLAYER] Waiting for ads... | Total played: %d\n", stats.TotalAdsPlayed)
+					}
+				}
+			}
+		} else {
+			fmt.Println("[WARN] System is running but heartbeat is not active")
+			fmt.Println("   Credentials are required to connect to ad server")
+			fmt.Println()
+			fmt.Println("INFO: To enable heartbeat system:")
+			fmt.Println("   1. Register a screen on the server")
+			fmt.Println("   2. Get the Screen ID and Passkey from the server")
+			fmt.Println("   3. Stop this process (Ctrl+C)")
+			fmt.Println("   4. Run again: ./bin/screen")
+			fmt.Println("   5. Enter 'y' when prompted and configure credentials")
+			fmt.Println()
+			fmt.Println("INFO: To test with manual ads:")
+			fmt.Println("   1. Use: ./bin/test-ads create-sample")
+			fmt.Println("   2. Or: ./bin/test-ads add-image <id> <path>")
+			fmt.Println("   3. Then restart: ./bin/screen")
+			fmt.Println()
+			fmt.Println("Waiting for credentials or ads...")
+			fmt.Println("   Press Ctrl+C to exit")
+			fmt.Println()
+			
+			// Wait for interrupt
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+			<-sigChan
+			
+			fmt.Println()
+			fmt.Println("Shutting down...")
+			fmt.Println("[OK] Shutdown complete")
+			return
+		}
 	}
 }
 

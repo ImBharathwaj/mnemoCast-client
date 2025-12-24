@@ -472,33 +472,57 @@ type ScreenConfig struct {
 
 ## Implementation Phases
 
-### Phase 1: Core Infrastructure (Priority: High)
-- [ ] Create `internal/player/player.go`
-- [ ] Create `internal/player/playlist.go`
-- [ ] Create `internal/player/scheduler.go`
-- [ ] Basic player lifecycle (start/stop)
-- [ ] Playlist filtering and sorting
+### Phase 1: Core Infrastructure (Priority: High) ✅ COMPLETED
+- [x] Create `internal/player/player.go`
+- [x] Create `internal/player/playlist.go`
+- [x] Create `internal/player/scheduler.go`
+- [x] Basic player lifecycle (start/stop)
+- [x] Playlist filtering and sorting
 
-### Phase 2: Media Downloader (Priority: High)
-- [ ] Create `internal/player/downloader.go`
-- [ ] Implement download logic
-- [ ] Implement caching mechanism
-- [ ] Add retry logic
-- [ ] File validation
+**Status:** ✅ Complete
+- Player orchestrator with state management
+- Playlist manager with time-based filtering and priority sorting
+- Scheduler for ad duration and transitions
 
-### Phase 3: Renderer System (Priority: High)
-- [ ] Create renderer interface
-- [ ] Implement image renderer
-- [ ] Implement video renderer
-- [ ] Implement HTML renderer
-- [ ] Implement text renderer
-- [ ] Renderer selection logic
+### Phase 2: Media Downloader (Priority: High) ✅ COMPLETED
+- [x] Create `internal/player/downloader.go`
+- [x] Implement download logic
+- [x] Implement caching mechanism
+- [x] Add retry logic
+- [x] File validation
 
-### Phase 4: Integration (Priority: Medium)
-- [ ] Integrate player with fetcher
-- [ ] Integrate player with main application
-- [ ] Handle ad updates
-- [ ] Graceful shutdown
+**Status:** ✅ Complete
+- HTTP downloader with retry mechanism
+- Local file caching in `~/.mnemocast/ads/media/{adId}/`
+- File extension detection from URL or ad type
+- Cleanup of old media files
+
+### Phase 3: Renderer System (Priority: High) ✅ COMPLETED
+- [x] Create renderer interface
+- [x] Implement image renderer
+- [x] Implement video renderer
+- [x] Implement HTML renderer
+- [x] Implement text renderer
+- [x] Renderer selection logic
+
+**Status:** ✅ Complete
+- Renderer interface and manager
+- Image renderer: Uses `feh`, `imv`, `sxiv`, or `xdg-open`
+- Video renderer: Uses `mpv`, `vlc`, `ffplay`, or `xdg-open`
+- HTML renderer: Local HTTP server + browser
+- Text renderer: Terminal display with formatting
+
+### Phase 4: Integration (Priority: Medium) ✅ COMPLETED
+- [x] Integrate player with fetcher
+- [x] Integrate player with main application
+- [x] Handle ad updates
+- [x] Graceful shutdown
+
+**Status:** ✅ Complete
+- Player integrated with ad fetcher via callback
+- Player starts automatically when ads are available
+- Updates playlist when new ads arrive
+- Graceful shutdown on Ctrl+C
 
 ### Phase 5: Configuration (Priority: Medium)
 - [ ] Add player config to models
@@ -506,17 +530,33 @@ type ScreenConfig struct {
 - [ ] Apply config defaults
 - [ ] Config validation
 
+**Status:** ⏳ Pending
+- Currently using hardcoded defaults (30s duration, 1s transition)
+- Configuration can be added to `ScreenConfig` model
+
 ### Phase 6: Error Handling (Priority: Medium)
-- [ ] Implement error recovery
-- [ ] Handle edge cases
+- [x] Basic error handling implemented
+- [ ] Enhanced error recovery
+- [ ] Handle edge cases (no ads, all expired, etc.)
 - [ ] Add health checks
 - [ ] Fallback mechanisms
 
+**Status:** 🟡 Partial
+- Basic error handling in place
+- Player handles missing ads gracefully
+- Media download failures use cached versions
+- Enhanced recovery and edge cases pending
+
 ### Phase 7: Logging & Monitoring (Priority: Low)
-- [ ] Add comprehensive logging
-- [ ] Player statistics
-- [ ] Status reporting
+- [x] Basic logging implemented
+- [ ] Enhanced player statistics
+- [ ] Status reporting in main loop
 - [ ] Debug mode
+
+**Status:** 🟡 Partial
+- Basic logging for player events
+- Statistics tracking (total ads played, current ad)
+- Status reporting can be enhanced in main loop
 
 ---
 

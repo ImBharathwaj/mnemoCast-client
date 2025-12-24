@@ -26,6 +26,9 @@ type Fetcher struct {
 	lastAds  *models.AdDeliveryResponse
 	lastFetch time.Time
 	lastError error
+	
+	// Callback for ad updates
+	onAdsUpdated func(*models.AdDeliveryResponse)
 }
 
 // NewFetcher creates a new ad fetcher
@@ -130,6 +133,14 @@ func (f *Fetcher) fetchAds() {
 				log.Printf("[%s] [WARN] Failed to save ads to filesystem: %v", successTime.Format("15:04:05.000"), err)
 			} else {
 				log.Printf("[%s] [OK] Ads saved to filesystem: %s", successTime.Format("15:04:05.000"), f.storage.GetAdsDir())
+			}
+			
+			// Call callback if set
+			f.mu.RLock()
+			callback := f.onAdsUpdated
+			f.mu.RUnlock()
+			if callback != nil {
+				callback(ads)
 			}
 
 			if attempt > 0 {
@@ -245,5 +256,12 @@ func (f *Fetcher) GetStats() map[string]interface{} {
 	}
 
 	return stats
+}
+
+// SetOnAdsUpdated sets a callback function that will be called when ads are updated
+func (f *Fetcher) SetOnAdsUpdated(callback func(*models.AdDeliveryResponse)) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.onAdsUpdated = callback
 }
 
